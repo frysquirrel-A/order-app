@@ -306,6 +306,425 @@
   border-color: #1565c0;
 }
 
+/* 관리자 화면 스타일 */
+.admin-container {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.admin-section-title {
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+}
+
+/* 관리자 대시보드 */
+.admin-dashboard {
+  background-color: #f5f5f5;
+  border: 2px solid #666;
+  border-radius: 8px;
+  padding: 30px;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-total {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.stat-total .stat-label,
+.stat-total .stat-value {
+  color: white;
+}
+
+.stat-received {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.stat-received .stat-label,
+.stat-received .stat-value {
+  color: white;
+}
+
+.stat-preparing {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.stat-preparing .stat-label,
+.stat-preparing .stat-value {
+  color: white;
+}
+
+.stat-completed {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.stat-completed .stat-label,
+.stat-completed .stat-value {
+  color: white;
+}
+
+/* 재고 현황 */
+.admin-inventory {
+  background-color: #f5f5f5;
+  border: 2px solid #666;
+  border-radius: 8px;
+  padding: 30px;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.inventory-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.inventory-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.inventory-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  width: 100%;
+}
+
+.inventory-item-name {
+  font-size: clamp(14px, 2.5vw, 24px);
+  font-weight: bold;
+  color: #333;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.inventory-stock {
+  font-size: clamp(14px, 2.5vw, 24px);
+  font-weight: bold;
+  color: #1976d2;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.inventory-controls-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+
+.inventory-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.inventory-status-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: #e0e0e0;
+  color: #666;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.status-badge.active.status-normal {
+  background-color: #4caf50;
+  color: white;
+}
+
+.status-badge.active.status-warning {
+  background-color: #ff9800;
+  color: white;
+}
+
+.status-badge.active.status-out {
+  background-color: #f44336;
+  color: white;
+}
+
+
+.inventory-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.inventory-increase:hover {
+  background-color: #d0d0d0;
+}
+
+.inventory-decrease:hover {
+  background-color: #d0d0d0;
+}
+
+/* 주문 현황 */
+.admin-orders {
+  background-color: #f5f5f5;
+  border: 2px solid #666;
+  border-radius: 8px;
+  padding: 30px;
+}
+
+.empty-orders {
+  text-align: center;
+  color: #999;
+  padding: 40px;
+  font-size: 18px;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.order-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.order-info {
+  flex: 1;
+  text-align: left;
+}
+
+.order-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.order-date {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  justify-self: start;
+}
+
+.order-number {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1976d2;
+  justify-self: center;
+}
+
+.order-items {
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.order-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.order-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.order-item-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.order-item-price {
+  font-size: 12px;
+  color: #666;
+}
+
+.order-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-item {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.order-amount {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1976d2;
+}
+
+.order-actions {
+  margin-left: 20px;
+}
+
+.order-status-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: white;
+}
+
+.status-received {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.status-received:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.order-back-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 4px;
+  background-color: #e0e0e0;
+  color: #333;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-back-btn:hover {
+  background-color: #d0d0d0;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.status-preparing {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.status-preparing:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.status-completed-disabled {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  cursor: default;
+}
+
+/* 품절 배지 */
+.out-of-stock-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(244, 67, 54, 0.9);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.menu-image {
+  position: relative;
+}
+
+.add-to-cart-btn:disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .app {
@@ -337,5 +756,28 @@
 
   .cart-right {
     flex: 1;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .inventory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .order-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .order-status-btn {
+    width: 100%;
   }
 }
