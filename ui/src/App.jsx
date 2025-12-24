@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import './App.css'
 
 // 메뉴 데이터
@@ -48,21 +48,77 @@ const menuItems = [
 ]
 
 function App() {
+  // localStorage에서 데이터 로드
+  const loadFromStorage = (key, defaultValue) => {
+    try {
+      const item = localStorage.getItem(key)
+      return item ? JSON.parse(item) : defaultValue
+    } catch (error) {
+      console.error(`Error loading ${key} from localStorage:`, error)
+      return defaultValue
+    }
+  }
+
+  // 초기 상태 설정 (localStorage에서 로드)
   const [currentView, setCurrentView] = useState('order') // 'order' or 'admin'
-  const [cart, setCart] = useState([])
-  const [orders, setOrders] = useState([]) // 주문 목록
-  const [orderCounter, setOrderCounter] = useState(1) // 주문번호 카운터
-  const [inventory, setInventory] = useState(
-    menuItems.reduce((acc, item) => {
+  const [cart, setCart] = useState(() => loadFromStorage('cozy_cart', []))
+  const [orders, setOrders] = useState(() => loadFromStorage('cozy_orders', []))
+  const [orderCounter, setOrderCounter] = useState(() => loadFromStorage('cozy_orderCounter', 1))
+  const [inventory, setInventory] = useState(() => {
+    const saved = loadFromStorage('cozy_inventory', null)
+    if (saved) return saved
+    // 초기 재고 설정
+    return menuItems.reduce((acc, item) => {
       acc[item.id] = 10 // 초기 재고 10개
       return acc
     }, {})
-  )
+  })
+
+  // localStorage에 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('cozy_cart', JSON.stringify(cart))
+    } catch (error) {
+      console.error('Error saving cart to localStorage:', error)
+    }
+  }, [cart])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cozy_orders', JSON.stringify(orders))
+    } catch (error) {
+      console.error('Error saving orders to localStorage:', error)
+    }
+  }, [orders])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cozy_orderCounter', JSON.stringify(orderCounter))
+    } catch (error) {
+      console.error('Error saving orderCounter to localStorage:', error)
+    }
+  }, [orderCounter])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cozy_inventory', JSON.stringify(inventory))
+    } catch (error) {
+      console.error('Error saving inventory to localStorage:', error)
+    }
+  }, [inventory])
 
   // 장바구니에 아이템 추가
-  const addToCart = (item, options) => {
+  const addToCart = useCallback((item, options) => {
+    // 재고 확인
+    const stock = inventory[item.id] || 0
+    if (stock === 0) {
+      alert('품절된 상품입니다.')
+      return
+    }
+
     const cartItem = {
       id: `${item.id}-${options.shot ? 'shot' : ''}-${options.syrup ? 'syrup' : ''}`,
+      itemId: item.id, // 재고 차감을 위한 아이템 ID
       name: item.name,
       basePrice: item.price,
       options: options,
@@ -82,23 +138,39 @@ function App() {
     )
 
     if (existingItemIndex >= 0) {
-      // 이미 있으면 수량 증가
+      // 이미 있으면 수량 증가 (재고 확인)
+      const newQuantity = cart[existingItemIndex].quantity + 1
+      if (newQuantity > stock) {
+        alert(`재고가 부족합니다. (현재 재고: ${stock}개)`)
+        return
+      }
       const newCart = [...cart]
-      newCart[existingItemIndex].quantity += 1
+      newCart[existingItemIndex].quantity = newQuantity
       setCart(newCart)
     } else {
       // 없으면 새로 추가
       setCart([...cart, cartItem])
     }
-  }
+  }, [cart, inventory])
 
   // 장바구니 수량 증가
-  const increaseQuantity = (itemId) => {
+  const increaseQuantity = useCallback((itemId) => {
+    const cartItem = cart.find(item => item.id === itemId)
+    if (!cartItem) return
+
+    const stock = inventory[cartItem.itemId] || 0
+    const newQuantity = cartItem.quantity + 1
+
+    if (newQuantity > stock) {
+      alert(`재고가 부족합니다. (현재 재고: ${stock}개)`)
+      return
+    }
+
     const newCart = cart.map((item) =>
-      item.id === itemId ? { ...item, quantity: item.quantity + 1 } : item
+      item.id === itemId ? { ...item, quantity: newQuantity } : item
     )
     setCart(newCart)
-  }
+  }, [cart, inventory])
 
   // 장바구니 수량 감소
   const decreaseQuantity = (itemId) => {
@@ -111,14 +183,25 @@ function App() {
   }
 
   // 주문하기
-  const handleOrder = () => {
+  const handleOrder = useCallback(() => {
     if (cart.length === 0) {
       alert('장바구니가 비어있습니다.')
       return
     }
+
+    // 재고 확인
+    const stockCheck = cart.every(cartItem => {
+      const stock = inventory[cartItem.itemId] || 0
+      return cartItem.quantity <= stock
+    })
+
+    if (!stockCheck) {
+      alert('일부 상품의 재고가 부족합니다. 장바구니를 확인해주세요.')
+      return
+    }
     
     // 주문 생성
-    const totalAmount = calculateTotal()
+    const totalAmount = cart.reduce((total, item) => total + item.price * item.quantity, 0)
     const now = new Date()
     const orderDate = `${now.getMonth() + 1}월 ${now.getDate()}일 ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
     
@@ -129,6 +212,7 @@ function App() {
       orderNumber: orderNumber,
       date: orderDate,
       items: cart.map(item => ({
+        itemId: item.itemId, // 재고 차감을 위한 ID 추가
         name: item.name,
         options: item.options,
         quantity: item.quantity,
@@ -138,30 +222,39 @@ function App() {
       totalAmount: totalAmount
     }
     
+    // 재고 차감
+    const newInventory = { ...inventory }
+    cart.forEach(cartItem => {
+      if (newInventory[cartItem.itemId] !== undefined) {
+        newInventory[cartItem.itemId] = Math.max(0, newInventory[cartItem.itemId] - cartItem.quantity)
+      }
+    })
+    setInventory(newInventory)
+    
     setOrders([newOrder, ...orders])
     setOrderCounter(prev => prev + 1)
     alert('주문이 완료되었습니다!')
     setCart([])
-  }
+  }, [cart, inventory, orderCounter, orders])
 
   // 재고 증가
-  const increaseInventory = (itemId) => {
+  const increaseInventory = useCallback((itemId) => {
     setInventory(prev => ({
       ...prev,
       [itemId]: (prev[itemId] || 0) + 1
     }))
-  }
+  }, [])
 
   // 재고 감소
-  const decreaseInventory = (itemId) => {
+  const decreaseInventory = useCallback((itemId) => {
     setInventory(prev => ({
       ...prev,
       [itemId]: Math.max(0, (prev[itemId] || 0) - 1)
     }))
-  }
+  }, [])
 
   // 주문 아이템 상태 변경
-  const changeOrderItemStatus = (orderId, itemIndex, newStatus) => {
+  const changeOrderItemStatus = useCallback((orderId, itemIndex, newStatus) => {
     setOrders(prev => prev.map(order => 
       order.id === orderId 
         ? {
@@ -172,18 +265,18 @@ function App() {
           }
         : order
     ))
-  }
+  }, [])
 
   // 재고 상태 확인
-  const getInventoryStatus = (itemId) => {
+  const getInventoryStatus = useCallback((itemId) => {
     const stock = inventory[itemId] || 0
     if (stock === 0) return 'out'
     if (stock < 5) return 'warning'
     return 'normal'
-  }
+  }, [inventory])
 
-  // 대시보드 통계 계산
-  const dashboardStats = {
+  // 대시보드 통계 계산 (메모이제이션)
+  const dashboardStats = useMemo(() => ({
     total: orders.length,
     received: orders.reduce((sum, order) => 
       sum + order.items.filter(item => item.status === 'received').length, 0
@@ -194,12 +287,12 @@ function App() {
     completed: orders.reduce((sum, order) => 
       sum + order.items.filter(item => item.status === 'completed').length, 0
     )
-  }
+  }), [orders])
 
-  // 총 금액 계산
-  const calculateTotal = () => {
+  // 총 금액 계산 (메모이제이션)
+  const calculateTotal = useMemo(() => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0)
-  }
+  }, [cart])
 
   return (
     <div className="app">
@@ -286,7 +379,7 @@ function App() {
                 </div>
                 <div className="cart-right">
                   <div className="cart-total">
-                    총 금액 <strong>{calculateTotal().toLocaleString()}원</strong>
+                    총 금액 <strong>{calculateTotal.toLocaleString()}원</strong>
                   </div>
                   <button className="order-btn" onClick={handleOrder}>
                     주문하기
@@ -486,6 +579,7 @@ function MenuItemCard({ item, onAddToCart, stock }) {
     shot: false,
     syrup: false
   })
+  const [imageError, setImageError] = useState(false)
 
   const handleOptionChange = (optionName) => {
     setOptions((prev) => ({
@@ -500,12 +594,25 @@ function MenuItemCard({ item, onAddToCart, stock }) {
     setOptions({ shot: false, syrup: false })
   }
 
+  const handleImageError = () => {
+    setImageError(true)
+  }
+
   const isOutOfStock = stock === 0
 
   return (
     <div className="menu-card">
       <div className="menu-image">
-        <img src={item.image} alt={item.name} className="menu-image-img" />
+        {imageError ? (
+          <div className="image-placeholder">이미지 없음</div>
+        ) : (
+          <img 
+            src={item.image} 
+            alt={item.name} 
+            className="menu-image-img"
+            onError={handleImageError}
+          />
+        )}
         {isOutOfStock && <div className="out-of-stock-badge">품절</div>}
       </div>
       <div className="menu-info">
