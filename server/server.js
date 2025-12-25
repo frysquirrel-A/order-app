@@ -28,10 +28,14 @@ app.get('/', (req, res) => {
   res.json({ message: '커피 주문 앱 백엔드 서버가 실행 중입니다.' })
 })
 
-// API 라우트 (추후 추가 예정)
-// app.use('/api/menus', menuRoutes)
-// app.use('/api/options', optionRoutes)
-// app.use('/api/orders', orderRoutes)
+// API 라우트
+import menuRoutes from './routes/menus.js'
+import optionRoutes from './routes/options.js'
+import orderRoutes from './routes/orders.js'
+
+app.use('/api/menus', menuRoutes)
+app.use('/api/options', optionRoutes)
+app.use('/api/orders', orderRoutes)
 
 // 에러 핸들링 미들웨어
 app.use((err, req, res, next) => {
