@@ -147,3 +147,372 @@
   - 각 상태 변경 시 관리자 대시보드의 통계가 자동으로 업데이트됨
   - 완료된 주문은 목록에서 제거되거나 별도로 표시될 수 있음
 
+## 6. 백엔드 개발
+
+### 6.1 데이터 모델
+
+#### 6.1.1 Menus (메뉴 정보)
+메뉴 정보를 저장하는 테이블입니다.
+
+**필드 구성:**
+- `id` (Primary Key): 메뉴 고유 식별자
+- `name`: 커피 이름 (예: "아메리카노(ICE)", "카페라떼")
+- `description`: 메뉴 설명 (예: "시원한 아이스 아메리카노")
+- `price`: 메뉴 기본 가격 (정수, 원 단위)
+- `image`: 메뉴 이미지 URL
+- `stock`: 재고 수량 (정수, 기본값 10)
+- `created_at`: 생성 일시
+- `updated_at`: 수정 일시
+
+**사용 화면:**
+- **주문 화면**: 커피 이름, 설명, 가격, 이미지 표시
+- **관리자 화면**: 재고 수량 표시 및 관리
+
+#### 6.1.2 Options (옵션 정보)
+메뉴에 추가할 수 있는 옵션 정보를 저장하는 테이블입니다.
+
+**필드 구성:**
+- `id` (Primary Key): 옵션 고유 식별자
+- `name`: 옵션 이름 (예: "샷 추가", "시럽 추가")
+- `price`: 옵션 추가 가격 (정수, 원 단위, 0 이상)
+- `menu_id` (Foreign Key): 연결할 메뉴 ID (모든 메뉴에 적용 가능한 경우 NULL)
+- `created_at`: 생성 일시
+- `updated_at`: 수정 일시
+
+**사용 화면:**
+- **주문 화면**: 메뉴 선택 시 옵션 체크박스로 표시
+
+#### 6.1.3 Orders (주문 정보)
+주문 정보를 저장하는 테이블입니다.
+
+**필드 구성:**
+- `id` (Primary Key): 주문 고유 식별자
+- `order_number`: 주문번호 (문자열, 예: "001", "002")
+- `order_date`: 주문 일시 (타임스탬프)
+- `total_amount`: 주문 총 금액 (정수, 원 단위)
+- `status`: 주문 상태 (문자열: 'received', 'preparing', 'completed')
+- `created_at`: 생성 일시
+- `updated_at`: 수정 일시
+
+**사용 화면:**
+- **관리자 화면**: 주문 현황에 표시
+
+#### 6.1.4 OrderItems (주문 상세 정보)
+주문에 포함된 각 메뉴 아이템의 상세 정보를 저장하는 테이블입니다.
+
+**필드 구성:**
+- `id` (Primary Key): 주문 아이템 고유 식별자
+- `order_id` (Foreign Key): 주문 ID
+- `menu_id` (Foreign Key): 메뉴 ID
+- `quantity`: 수량 (정수)
+- `unit_price`: 단가 (정수, 원 단위, 메뉴 가격 + 옵션 가격 합계)
+- `status`: 아이템별 제조 상태 (문자열: 'received', 'preparing', 'completed')
+- `created_at`: 생성 일시
+- `updated_at`: 수정 일시
+
+#### 6.1.5 OrderItemOptions (주문 아이템 옵션)
+주문 아이템에 선택된 옵션 정보를 저장하는 테이블입니다.
+
+**필드 구성:**
+- `id` (Primary Key): 고유 식별자
+- `order_item_id` (Foreign Key): 주문 아이템 ID
+- `option_id` (Foreign Key): 옵션 ID
+- `created_at`: 생성 일시
+
+### 6.2 데이터 스키마를 위한 사용자 흐름
+
+#### 6.2.1 메뉴 조회 및 표시
+1. 사용자가 '주문하기' 화면에 접속합니다.
+2. 프런트엔드에서 `GET /api/menus` API를 호출합니다.
+3. 백엔드는 Menus 테이블에서 모든 메뉴 정보를 조회합니다.
+4. 조회된 메뉴 정보(이름, 설명, 가격, 이미지)를 프런트엔드에 전달합니다.
+5. 프런트엔드는 받은 정보를 화면에 표시합니다.
+6. 관리자 화면에서는 Menus 테이블의 `stock` 필드를 조회하여 재고 수량을 표시합니다.
+
+#### 6.2.2 장바구니 관리
+1. 사용자가 메뉴 카드에서 옵션을 선택하고 "담기" 버튼을 클릭합니다.
+2. 선택 정보는 프런트엔드의 장바구니 상태에 저장됩니다.
+3. 장바구니에는 메뉴 ID, 옵션 정보, 수량이 포함됩니다.
+4. 장바구니 화면에 선택한 메뉴와 옵션, 수량, 가격이 표시됩니다.
+
+#### 6.2.3 주문 생성
+1. 사용자가 장바구니에서 "주문하기" 버튼을 클릭합니다.
+2. 프런트엔드에서 `POST /api/orders` API를 호출합니다.
+3. 요청 본문에 다음 정보를 포함합니다:
+   - 주문 일시 (또는 서버에서 생성)
+   - 주문 내용 (메뉴 ID, 옵션 ID 배열, 수량, 단가)
+   - 총 금액
+4. 백엔드는 다음 작업을 수행합니다:
+   - Orders 테이블에 주문 정보를 저장합니다.
+   - OrderItems 테이블에 각 주문 아이템을 저장합니다.
+   - OrderItemOptions 테이블에 선택된 옵션을 저장합니다.
+   - Menus 테이블의 해당 메뉴 재고를 주문 수량만큼 차감합니다.
+5. 주문이 성공적으로 생성되면 주문 ID와 주문번호를 반환합니다.
+6. 프런트엔드는 장바구니를 초기화하고 주문 완료 메시지를 표시합니다.
+
+#### 6.2.4 주문 현황 조회 및 상태 변경
+1. 관리자가 관리자 화면의 "주문 현황" 섹션에 접속합니다.
+2. 프런트엔드에서 `GET /api/orders` API를 호출합니다.
+3. 백엔드는 Orders 테이블과 관련 OrderItems, OrderItemOptions를 조인하여 조회합니다.
+4. 주문 목록을 최신순으로 정렬하여 반환합니다.
+5. 프런트엔드는 받은 주문 정보를 화면에 표시합니다.
+6. 각 주문 아이템의 기본 상태는 'received' (주문 접수)입니다.
+7. 관리자가 "주문 접수" 버튼을 클릭하면:
+   - 프런트엔드에서 `PATCH /api/orders/:orderId/items/:itemId` API를 호출합니다.
+   - 상태를 'preparing' (제조 중)으로 변경합니다.
+8. 관리자가 "제조 중" 버튼을 클릭하면:
+   - 프런트엔드에서 `PATCH /api/orders/:orderId/items/:itemId` API를 호출합니다.
+   - 상태를 'completed' (제조 완료)로 변경합니다.
+
+### 6.3 API 설계
+
+#### 6.3.1 메뉴 관련 API
+
+**GET /api/menus**
+- **설명**: 모든 메뉴 목록을 조회합니다.
+- **요청**: 없음
+- **응답**:
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "아메리카노(ICE)",
+      "description": "시원한 아이스 아메리카노",
+      "price": 4000,
+      "image": "https://...",
+      "stock": 10
+    },
+    ...
+  ]
+  ```
+- **사용 시점**: 주문하기 화면 진입 시
+
+**GET /api/menus/:id**
+- **설명**: 특정 메뉴의 상세 정보를 조회합니다.
+- **요청 파라미터**: `id` (메뉴 ID)
+- **응답**:
+  ```json
+  {
+    "id": 1,
+    "name": "아메리카노(ICE)",
+    "description": "시원한 아이스 아메리카노",
+    "price": 4000,
+    "image": "https://...",
+    "stock": 10
+  }
+  ```
+
+**PATCH /api/menus/:id/stock**
+- **설명**: 특정 메뉴의 재고를 수정합니다.
+- **요청 파라미터**: `id` (메뉴 ID)
+- **요청 본문**:
+  ```json
+  {
+    "stock": 15
+  }
+  ```
+- **응답**: 수정된 메뉴 정보
+- **사용 시점**: 관리자 화면에서 재고 조절 시
+
+#### 6.3.2 옵션 관련 API
+
+**GET /api/options**
+- **설명**: 모든 옵션 목록을 조회합니다.
+- **요청**: 없음
+- **응답**:
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "샷 추가",
+      "price": 500,
+      "menu_id": null
+    },
+    {
+      "id": 2,
+      "name": "시럽 추가",
+      "price": 0,
+      "menu_id": null
+    }
+  ]
+  ```
+
+**GET /api/menus/:id/options**
+- **설명**: 특정 메뉴에 적용 가능한 옵션 목록을 조회합니다.
+- **요청 파라미터**: `id` (메뉴 ID)
+- **응답**: 옵션 배열
+
+#### 6.3.3 주문 관련 API
+
+**POST /api/orders**
+- **설명**: 새로운 주문을 생성합니다.
+- **요청 본문**:
+  ```json
+  {
+    "items": [
+      {
+        "menu_id": 1,
+        "quantity": 2,
+        "options": [1],
+        "unit_price": 4500
+      },
+      {
+        "menu_id": 3,
+        "quantity": 1,
+        "options": [],
+        "unit_price": 5000
+      }
+    ],
+    "total_amount": 14000
+  }
+  ```
+- **응답**:
+  ```json
+  {
+    "id": 1,
+    "order_number": "001",
+    "order_date": "2024-01-15T10:30:00Z",
+    "total_amount": 14000,
+    "status": "received"
+  }
+  ```
+- **사용 시점**: 장바구니에서 "주문하기" 버튼 클릭 시
+- **부가 작업**: 주문 생성 시 해당 메뉴의 재고를 자동으로 차감
+
+**GET /api/orders**
+- **설명**: 모든 주문 목록을 조회합니다.
+- **요청 쿼리 파라미터** (선택):
+  - `status`: 주문 상태 필터링 ('received', 'preparing', 'completed')
+- **응답**:
+  ```json
+  [
+    {
+      "id": 1,
+      "order_number": "001",
+      "order_date": "2024-01-15T10:30:00Z",
+      "total_amount": 14000,
+      "status": "received",
+      "items": [
+        {
+          "id": 1,
+          "menu_id": 1,
+          "menu_name": "아메리카노(ICE)",
+          "quantity": 2,
+          "unit_price": 4500,
+          "status": "received",
+          "options": [
+            {
+              "id": 1,
+              "name": "샷 추가",
+              "price": 500
+            }
+          ]
+        }
+      ]
+    }
+  ]
+  ```
+- **사용 시점**: 관리자 화면의 주문 현황 조회 시
+
+**GET /api/orders/:id**
+- **설명**: 특정 주문의 상세 정보를 조회합니다.
+- **요청 파라미터**: `id` (주문 ID)
+- **응답**: 주문 상세 정보 (주문 아이템 및 옵션 포함)
+- **사용 시점**: 주문 상세 정보 확인 시
+
+**PATCH /api/orders/:orderId/items/:itemId**
+- **설명**: 주문 아이템의 상태를 변경합니다.
+- **요청 파라미터**: 
+  - `orderId` (주문 ID)
+  - `itemId` (주문 아이템 ID)
+- **요청 본문**:
+  ```json
+  {
+    "status": "preparing"
+  }
+  ```
+- **응답**: 수정된 주문 아이템 정보
+- **사용 시점**: 관리자 화면에서 주문 상태 변경 버튼 클릭 시
+
+**PATCH /api/orders/:id/status**
+- **설명**: 주문 전체의 상태를 변경합니다. (선택 사항)
+- **요청 파라미터**: `id` (주문 ID)
+- **요청 본문**:
+  ```json
+  {
+    "status": "completed"
+  }
+  ```
+
+### 6.4 데이터베이스 스키마 예시
+
+```sql
+-- Menus 테이블
+CREATE TABLE menus (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  price INTEGER NOT NULL,
+  image VARCHAR(500),
+  stock INTEGER DEFAULT 10,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Options 테이블
+CREATE TABLE options (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  price INTEGER DEFAULT 0,
+  menu_id INTEGER REFERENCES menus(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Orders 테이블
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  order_number VARCHAR(10) UNIQUE NOT NULL,
+  order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  total_amount INTEGER NOT NULL,
+  status VARCHAR(20) DEFAULT 'received',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- OrderItems 테이블
+CREATE TABLE order_items (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+  menu_id INTEGER REFERENCES menus(id) ON DELETE RESTRICT,
+  quantity INTEGER NOT NULL,
+  unit_price INTEGER NOT NULL,
+  status VARCHAR(20) DEFAULT 'received',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- OrderItemOptions 테이블
+CREATE TABLE order_item_options (
+  id SERIAL PRIMARY KEY,
+  order_item_id INTEGER REFERENCES order_items(id) ON DELETE CASCADE,
+  option_id INTEGER REFERENCES options(id) ON DELETE RESTRICT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 6.5 에러 처리
+
+모든 API는 다음 에러 상황을 처리해야 합니다:
+- **400 Bad Request**: 잘못된 요청 데이터
+- **404 Not Found**: 존재하지 않는 리소스
+- **500 Internal Server Error**: 서버 내부 오류
+
+에러 응답 형식:
+```json
+{
+  "error": "에러 메시지",
+  "code": "ERROR_CODE"
+}
+```
+
