@@ -10,11 +10,7 @@ npm install
 
 ## 환경 변수 설정
 
-`.env.example` 파일을 참고하여 `.env` 파일을 생성하고 데이터베이스 정보를 입력하세요.
-
-```bash
-cp .env.example .env
-```
+`.env` 파일에 데이터베이스 정보를 입력하세요.
 
 ## 실행 방법
 
@@ -38,4 +34,5 @@ npm start
 ## 데이터베이스
 
 PostgreSQL을 사용합니다. 데이터베이스 스키마는 `docs/PRD.md`의 6.4 섹션을 참고하세요.
+
 

@@ -1,12 +1,22 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import pool from './db.js'
 
 // 환경 변수 로드
 dotenv.config()
 
 const app = express()
 const PORT = process.env.PORT || 3000
+
+// 데이터베이스 연결 테스트
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('데이터베이스 연결 실패:', err)
+  } else {
+    console.log('데이터베이스 연결 성공:', res.rows[0].now)
+  }
+})
 
 // 미들웨어 설정
 app.use(cors()) // CORS 허용 (프런트엔드와 통신을 위해)
@@ -45,4 +55,5 @@ app.listen(PORT, () => {
   console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`)
   console.log(`http://localhost:${PORT}`)
 })
+
 
