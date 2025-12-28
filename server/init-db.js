@@ -122,9 +122,9 @@ const insertInitialData = async () => {
     // 메뉴 데이터 삽입
     const menuResult = await query(`
       INSERT INTO menus (name, description, price, image, stock) VALUES
-      ('아메리카노(ICE)', '시원한 아이스 아메리카노', 4000, '', 10),
-      ('아메리카노(HOT)', '따뜻한 핫 아메리카노', 4000, '', 10),
-      ('카페라떼', '부드러운 카페라떼', 5000, '', 10)
+      ('아메리카노(ICE)', '시원한 아이스 아메리카노', 4000, '/images/americano-ice.jpg', 10),
+      ('아메리카노(HOT)', '따뜻한 핫 아메리카노', 4000, '/images/americano-hot.jpg', 10),
+      ('카페라떼', '부드러운 카페라떼', 5000, '/images/caffe-latte.jpg', 10)
       RETURNING id
     `)
     console.log('✓ 메뉴 데이터 삽입 완료')
