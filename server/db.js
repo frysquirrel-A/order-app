@@ -15,6 +15,10 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'cozy_order_db',
   user: process.env.DB_USER || 'postgres',
   password: dbPassword,
+  // Render.com과 같은 클라우드 데이터베이스는 SSL이 필요합니다
+  ssl: process.env.DB_HOST && process.env.DB_HOST.includes('render.com') 
+    ? { rejectUnauthorized: false }
+    : false,
 })
 
 // 연결 테스트

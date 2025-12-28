@@ -2,13 +2,15 @@
   "name": "cozy-order-server",
   "version": "1.0.0",
   "description": "커피 주문 앱 백엔드 서버",
-  "main": "server.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
+    "start": "node index.js",
     "dev": "nodemon server.js",
     "create-db": "node create-db.js",
-    "init-db": "node init-db.js"
+    "init-db": "node init-db.js",
+    "test-db": "node test-db-connection.js",
+    "setup-render": "node setup-render-db.js"
   },
   "keywords": ["express", "coffee", "order"],
   "author": "",
