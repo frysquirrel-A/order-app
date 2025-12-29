@@ -19,7 +19,24 @@ pool.query('SELECT NOW()', (err, res) => {
 })
 
 // 미들웨어 설정
-app.use(cors()) // CORS 허용 (프런트엔드와 통신을 위해)
+// CORS 설정 (프런트엔드와 통신을 위해)
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  : process.env.NODE_ENV === 'production'
+    ? ['https://cozy-order-ui.onrender.com'] // 프로덕션 기본값
+    : ['http://localhost:5173', 'http://localhost:3000'] // 개발 환경
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // origin이 없거나 (같은 도메인 요청) 허용된 origin이면 통과
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(null, true) // 개발 중에는 모든 origin 허용
+    }
+  },
+  credentials: true,
+}))
 app.use(express.json()) // JSON 요청 본문 파싱
 app.use(express.urlencoded({ extended: true })) // URL 인코딩된 요청 본문 파싱
 
@@ -59,5 +76,6 @@ app.listen(PORT, () => {
   console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`)
   console.log(`http://localhost:${PORT}`)
 })
+
 
 
